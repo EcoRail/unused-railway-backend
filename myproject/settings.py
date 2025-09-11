@@ -5,7 +5,11 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-1_snw_byuuw*0era6@y3(%d335=n5!&959fs47y&a%a^=1n!v#'
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+SECERET_KEY = os.gettenv('SECERET_KEY')
 
 DEBUG = True
 
