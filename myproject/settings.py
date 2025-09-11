@@ -9,7 +9,7 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-SECERET_KEY = os.gettenv('SECERET_KEY')
+SECERET_KEY = os.getenv('SECERET_KEY')
 
 DEBUG = True
 
