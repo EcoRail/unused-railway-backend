@@ -26,6 +26,8 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
+KAKAO_REST_API_KEY = config('KAKAO_REST_API_KEY')
+
 ALLOWED_HOSTS = []
 
 

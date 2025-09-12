@@ -1,49 +1,51 @@
-# maps/management/commands/load_railway_data.py
-
 import csv
 from django.core.management.base import BaseCommand
 from maps.models import RailwayProperty
 
 class Command(BaseCommand):
-    help = 'Loads data from korail_data.csv into the RailwayProperty model'
+    help = "Load railway data from korail_data.csv into RailwayProperty model"
 
-    def handle(self, *args, **kwargs):
-        RailwayProperty.objects.all().delete()
-        self.stdout.write(self.style.SUCCESS('Successfully deleted existing railway properties.'))
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--file',
+            type=str,
+            default='korail_data.csv',
+            help='CSV file path (default: korail_data.csv in project root)'
+        )
 
-        csv_file_path = '../unused-railway-frontend/public/korail_data.csv'
+    def handle(self, *args, **options):
+        file_path = options['file']
+        created_count = 0
 
         try:
-            # 여기를 수정했습니다! utf-8-sig -> cp949
-            with open(csv_file_path, mode='r', encoding='cp949') as file:
-                reader = csv.reader(file)
-                next(reader)  # 헤더 행 건너뛰기
-
-                properties_to_create = []
+            with open(file_path, newline='', encoding='euc-kr') as csvfile:
+                reader = csv.DictReader(csvfile)
                 for row in reader:
+                    # 공부상 면적 처리 (쉼표 제거 + 숫자 변환)
+                    official_area_str = row.get("공부상 면적") or "0"
                     try:
-                        official_area_val = float(row[4])
-                    except (ValueError, IndexError):
+                        official_area_val = float(official_area_str.replace(",", "").strip())
+                    except ValueError:
                         official_area_val = 0.0
 
-                    properties_to_create.append(
-                        RailwayProperty(
-                            regional_headquarters=row[1],
-                            address=row[2],
-                            line_name=row[3],
-                            official_area=official_area_val,
-                            type_classification=row[5],
-                            usage_status=row[6],
-                            purpose_2024=row[7],
-                            future_plan=row[8],
-                            remarks=row[9] if len(row) > 9 else None,
-                        )
+                    RailwayProperty.objects.create(
+                        regional_headquarters=row.get("지역본부") or "",
+                        address=row.get("재산 소재지") or "",
+                        line_name=row.get("노선명") or "",
+                        official_area=official_area_val,   # ← 여기 반영
+                        type_classification=row.get("유형분류") or "",
+                        usage_status=row.get("사용여부") or "",
+                        purpose_2024=row.get("2024년도 사용목적") or "",
+                        future_plan=row.get("향후 사용계획 및 추진사항") or "",
+                        remarks=row.get("비고") or "",
                     )
-                
-                RailwayProperty.objects.bulk_create(properties_to_create)
-                self.stdout.write(self.style.SUCCESS(f'Successfully loaded {len(properties_to_create)} railway properties.'))
+                    created_count += 1
 
         except FileNotFoundError:
-            self.stdout.write(self.style.ERROR(f'File not found at {csv_file_path}. Please check the path.'))
-        except UnicodeDecodeError:
-            self.stdout.write(self.style.ERROR('Failed to decode the file with cp949. Try other encodings like "euc-kr".'))
+            self.stderr.write(self.style.ERROR(f"File not found: {file_path}"))
+            return
+        except Exception as e:
+            self.stderr.write(self.style.ERROR(f"Error: {e}"))
+            return
+
+        self.stdout.write(self.style.SUCCESS(f"Successfully imported {created_count} records."))
