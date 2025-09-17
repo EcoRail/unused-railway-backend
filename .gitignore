@@ -9,9 +9,6 @@ env/
 __pycache__/
 *.pyc
 
-# DB 파일 (SQLite 사용 시)
-db.sqlite3
-*.sqlite3
 
 # IDE 및 OS 관련 파일
 .idea/
